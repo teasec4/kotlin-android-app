@@ -39,6 +39,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.first_app.ui.theme.FirstappTheme
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +59,8 @@ class MainActivity : ComponentActivity() {
                        .fillMaxSize()
                        .systemBarsPadding() // SafeArea kind
                ) {
-                   Conversation(messages)
+                   ItemListScreen()
+
                }
            }
         }
@@ -59,46 +68,58 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Conversation(messages: List<Message>){
-    LazyColumn() {
-        items(messages){ message ->
-            MessageCard(message)
+fun ItemListScreen(){
+    val items = remember { mutableStateListOf(ListItem("Item 1")) }
+    val inputText = remember { mutableStateOf("") }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        LazyColumn(
+            modifier = Modifier.weight(1f)
+        ) {
+            itemsIndexed(items){ index, item ->
+               Row(
+                   modifier = Modifier
+                       .fillMaxWidth()
+                       .padding(8.dp),
+                   verticalAlignment = Alignment.CenterVertically,
+                   horizontalArrangement = Arrangement.SpaceBetween
+               ) {
+                   RadioButton(
+                       selected = item.isComplete,
+                       onClick = {
+                           items[index] = item.copy(isComplete = !item.isComplete)
+                       }
+                   )
+                   Text(item.text)
+                   Button(onClick = {items.removeAt(index)}) {
+                       Text("Delete")
+                   }
+               }
+            }
         }
-    }
-}
 
-@Composable
-fun MessageCard(msg: Message, modifier: Modifier = Modifier){
-    Row(
-        modifier = Modifier.padding(all = 8.dp),
-//        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(R.drawable.android_alien),
-            contentDescription = null,
+        TextField(
+            value = inputText.value,
+            onValueChange = {inputText.value = it},
+            label = {Text("Enter something")},
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Button(
+            onClick = {
+              if(inputText.value.isNotEmpty()){
+                  items.add(ListItem(inputText.value))
+                  inputText.value = ""
+              }
+            },
             modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = msg.name
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = msg.text,
-//            modifier = Modifier
-        )
+                .align(Alignment.CenterHorizontally)
+                .padding(16.dp)
+        ) { Text("Add new Item")}
     }
 }
 
-data class Message(
-    val name: String,
-    val text: String
-)
-
-val messages = listOf(
-    Message("Max", "Hello"),
-    Message("Anna", "Hi there")
+data class ListItem(
+    val text: String,
+    var isComplete: Boolean = false
 )
